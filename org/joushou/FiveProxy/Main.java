@@ -91,7 +91,7 @@ public class Main
 				}
 			}
 			in.close();
-		} catch (Exception e) {}
+		} catch (Exception e) {e.printStackTrace();}
 		return titles;
 	}
 	public static StringBuffer table = new StringBuffer();
