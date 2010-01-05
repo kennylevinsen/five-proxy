@@ -6,6 +6,7 @@ import java.sql.Connection;
 import java.sql.Statement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
  
  
 import com.google.protobuf.CodedInputStream;
@@ -21,19 +22,20 @@ public class MusicDB {
     } catch (Exception e) {
       e.printStackTrace();
     }
- 
     return conn;
   }
   public static void createTables() {
     Connection con = getConnection();
     try {
-      Statement statement = con.createStatement();
-      //Create Artist table
-      statement.execute("create table if not exists artists(id INTEGER PRIMARY KEY, syncTime INTEGER, mbid STRING, name STRING, discoveryDate INTEGER)");
-      statement.execute("create table if not exists albums(id INTEGER PRIMARY KEY, syncTime INTEGER, artistId INTEGER, mbid STRING, name STRING, discoveryDate INTEGER, releaseDate INTEGER)");
-      statement.execute("create table if not exists songs(id INTEGER PRIMARY KEY, syncTime INTEGER, artistId INTEGER, albumId INTEGER, mbid STRING, mimeType STRING, bitrate INTEGER, filesize INTEGER, length INTEGER, title STRING, track INTEGER)");
-      statement.execute("create table if not exists playLog(id INTEGER PRIMARY KEY AUTOINCREMENT, time DATE, songId INTEGER, ip STRING)");
-      con.close();
+      try {
+        Statement statement = con.createStatement();
+        statement.execute("create table if not exists artists(id INTEGER PRIMARY KEY, syncTime INTEGER, mbid STRING, name STRING, discoveryDate INTEGER)");
+        statement.execute("create table if not exists albums(id INTEGER PRIMARY KEY, syncTime INTEGER, artistId INTEGER, mbid STRING, name STRING, discoveryDate INTEGER, releaseDate INTEGER)");
+        statement.execute("create table if not exists songs(id INTEGER PRIMARY KEY, syncTime INTEGER, artistId INTEGER, albumId INTEGER, mbid STRING, mimeType STRING, bitrate INTEGER, filesize INTEGER, length INTEGER, title STRING, track INTEGER)");
+        statement.execute("create table if not exists playLog(id INTEGER PRIMARY KEY AUTOINCREMENT, songId INTEGER,  time DATE, ip STRING)");
+      } finally {
+        con.close();
+      }
     } catch(java.sql.SQLException e) { e.printStackTrace(); }
   }
   public static void insertSongs(Collection songs) {
@@ -45,23 +47,28 @@ public class MusicDB {
       String str = "insert into songs values(?,?,?,?,?,?,?,?,?,?,?)";
       PreparedStatement ps = con.prepareStatement(str);
       Statement st = con.createStatement();
-      st.execute("delete from songs");
-      for (i = 0; i < song.length; i++) {
-        Protos.Song s = (Protos.Song) song[i];
-        ps.setLong(1,s.getId());
-        ps.setLong(2,s.getSyncTime());
-        ps.setLong(3,s.getArtistId());
-        ps.setLong(4,s.getAlbumId());
-        ps.setString(5,s.getMbid());
-        ps.setString(6,s.getMimeType());
-        ps.setInt(7,s.getBitrate());
-        ps.setLong(8,s.getFilesize());
-        ps.setInt(9,s.getLength());
-        ps.setString(10,s.getTitle());
-        ps.setInt(11,s.getTrack());
+      try{
+        st.execute("delete from songs");
+        for (i = 0; i < song.length; i++) {
+          Protos.Song s = (Protos.Song) song[i];
+          ps.setLong(1,s.getId());
+          ps.setLong(2,s.getSyncTime());
+          ps.setLong(3,s.getArtistId());
+          ps.setLong(4,s.getAlbumId());
+          ps.setString(5,s.getMbid());
+          ps.setString(6,s.getMimeType());
+          ps.setInt(7,s.getBitrate());
+          ps.setLong(8,s.getFilesize());
+          ps.setInt(9,s.getLength());
+          ps.setString(10,s.getTitle());
+          ps.setInt(11,s.getTrack());
  
-        ps.executeUpdate();
+          ps.executeUpdate();
  
+        }
+      } finally {
+        ps.close();
+        con.close();
       }
       con.close();
     } catch (java.sql.SQLException e) {
@@ -76,17 +83,21 @@ public class MusicDB {
       String str = "insert into artists values(?,?,?,?,?)";
       PreparedStatement ps = con.prepareStatement(str);
       Statement st = con.createStatement();
-      st.execute("delete from artists");
-      for (i = 0; i < artist.length; i++) {
-        Protos.Artist a = (Protos.Artist) artist[i];
-        ps.setLong(1,a.getId());
-        ps.setLong(2,a.getSyncTime());
-        ps.setString(3,a.getMbid());
-        ps.setString(4,a.getName());
-        ps.setLong(5,a.getDiscoveryDate());
-        ps.executeUpdate();
+      try {
+        st.execute("delete from artists");
+        for (i = 0; i < artist.length; i++) {
+          Protos.Artist a = (Protos.Artist) artist[i];
+          ps.setLong(1,a.getId());
+          ps.setLong(2,a.getSyncTime());
+          ps.setString(3,a.getMbid());
+          ps.setString(4,a.getName());
+          ps.setLong(5,a.getDiscoveryDate());
+          ps.executeUpdate();
+        }
+      } finally {
+        ps.close();
+        con.close();
       }
- 
     } catch (java.sql.SQLException e) {
       e.printStackTrace();
     }
@@ -96,10 +107,10 @@ public class MusicDB {
     Object[] album = albums.toArray();
     int i = 0;
     try {
+      String str = "insert into albums values(?,?,?,?,?,?,?)";
+      PreparedStatement ps = con.prepareStatement(str);
+      Statement st = con.createStatement();
       try {
-        String str = "insert into albums values(?,?,?,?,?,?,?)";
-        PreparedStatement ps = con.prepareStatement(str);
-        Statement st = con.createStatement();
         st.execute("delete from albums");
         for (i = 0; i < album.length; i++) {
           Protos.Album a = (Protos.Album) album[i];
@@ -125,26 +136,30 @@ public class MusicDB {
     try {
       Connection con = getConnection();
       String str = "insert into playlog values(null, "+Integer.toString(songId)+",strftime('%s','now'),?)";
-      PreparedStatement ps = con.prepareStatement(str);
-      ps.setString(1,ip);
-      ps.executeUpdate();
-      con.close();
+      PreparedStatement ps = con.prepareStatement(str);      
+      try {
+        ps.setString(1,ip);
+        ps.executeUpdate();
+      } finally {  
+        ps.close();
+        con.close();
+      }
     } catch(java.sql.SQLException e) {e.printStackTrace();}
   }
   public static String getTitleFromId(int id){
     Connection con = getConnection();
     try {
-    Statement st = con.createStatement();
-  
-    ResultSet rs;
-    rs = st.executeQuery("select title as songName from songs where `id` == "+id+" LIMIT 1");
-  
-    rs.next();
-  
-    String songName = rs.getString("songName");
-    rs.close();
-    con.close();
-    return songName;
+      Statement st = con.createStatement();  
+      String songName;
+      ResultSet rs = st.executeQuery("select title as songName from songs where `id` == "+id+" LIMIT 1");
+      try {
+        rs.next();
+        songName = rs.getString("songName");
+      } finally {
+        rs.close();
+        con.close();
+      }
+      return songName;
     } catch (java.sql.SQLException e) {
         e.printStackTrace();
     }
@@ -153,17 +168,18 @@ public class MusicDB {
   public static long getSizeFromId(int id){
     Connection con = getConnection();
     try {
-    Statement st = con.createStatement();
- 
-    ResultSet rs;
-    rs = st.executeQuery("select fileSize from songs where `id` == "+id+" LIMIT 1");
- 
-    rs.next();
- 
-    long fileSize = rs.getLong("fileSize");
-    rs.close();
-    con.close();
-    return fileSize;
+      Statement st = con.createStatement();
+      ResultSet rs;
+      long fileSize;
+      rs = st.executeQuery("select fileSize from songs where `id` == "+id+" LIMIT 1");  
+      try {
+        rs.next(); 
+        fileSize = rs.getLong("fileSize");
+      } finally {
+        rs.close();
+        con.close();
+      }
+      return fileSize;
     } catch (java.sql.SQLException e) {
         e.printStackTrace();
     }
@@ -201,5 +217,38 @@ public class MusicDB {
       e.printStackTrace();
     }
     return "False";
+  }
+  public static Integer[] getCleanupIds() {
+    try {
+      Connection con = getConnection();
+      Statement st  = con.createStatement();
+      String sql = "select songId, count(*) TotalCount from playLog group by songId having (strftime('%s','now') - max(time)) > "+Settings.bufferTime+" "+(Settings.preservedPlaycount != -1 ? "and count(*) < " + Settings.preservedPlaycount : "")+" order by TotalCount asc, max(time) asc";
+      ArrayList songIds = new ArrayList();
+      try {
+        ResultSet rs = st.executeQuery(sql);
+        int i = 0;
+        while (rs.next()) {
+          int id = rs.getInt("songId");
+          songIds.add(id);
+        }
+        Integer[] songId = (Integer[])songIds.toArray();
+        return songId;
+      } finally {
+        con.close();
+      }
+    } catch (java.sql.SQLException e) {e.printStackTrace();}
+    return new Integer[1];
+  }
+  public static void deleteLogById(int id) {
+    try {
+      Connection con = getConnection();
+      String str = "delete from playLog where songId=="+id;
+      Statement st = con.createStatement();      
+      try {
+        st.executeUpdate(str);
+      } finally {  
+        con.close();
+      }
+    } catch(java.sql.SQLException e) {e.printStackTrace();}
   }
 }

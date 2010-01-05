@@ -43,21 +43,17 @@ class Caching extends Thread {
           Main.log("CacheManager: " + getPercentageUsed() + "% used ["+getCacheSize() / 1048576+"MiB/"+Settings.maxCache/1048576+"MiB]");
           if (getCacheSize() > Settings.maxCache) {
             Main.log("CacheManager: Initiating cleanup-routine...");
-            Class.forName("org.sqlite.JDBC");
-            Connection con = DriverManager.getConnection("jdbc:sqlite:music.db");
-            Statement st = con.createStatement();
-            String sql = "select songId, count(*) TotalCount from playLog group by songId having (strftime('%s','now') - max(time)) > "+Settings.bufferTime+" "+(Settings.preservedPlaycount != -1 ? "and count(*) < " + Settings.preservedPlaycount : "")+" order by TotalCount asc, max(time) asc";
-            ResultSet rs = st.executeQuery(sql);
-            while(rs.next() && getCacheSize() > Settings.maxCache) {
-              int id = rs.getInt("songId");
+            Integer[] delIds = MusicDB.getCleanupIds();
+            int i = 0;
+            while(i <= delIds.length  && getCacheSize() > Settings.maxCache) {
+              int id = delIds[i];
               if(!Caching.isCaching(id)) {
-                Main.log("CacheManager: Deleting '" + MusicDB.getTitleFromId(id) + "' from cache ("+rs.getInt("TotalCount")+" playbacks since caching)");
+                Main.log("CacheManager: Deleting '" + MusicDB.getTitleFromId(id) + "' from cache");
                 File f = new File(Settings.cacheFolder + id);
                 f.delete();
-                con.createStatement().executeUpdate("delete from playLog where songId=="+id);
+                MusicDB.deleteLogById(id);
               }
             }
-            con.close();
             if(getCacheSize() > Settings.maxCache) {
               Main.log("CacheManager: Still too big after cleaning up; Consider increasing the cache size"); 
             } else {
@@ -65,8 +61,6 @@ class Caching extends Thread {
             }
           }
         wait();
-        } catch (java.sql.SQLException e) {
-          e.printStackTrace();
         } catch(Exception e) {e.printStackTrace();}
       }
   }
