@@ -20,7 +20,7 @@ import com.google.protobuf.CodedInputStream;
 
 public class Main
 {
-  public static Caching mCaching = new Caching();
+  public static cacheManager mCacheManager = new cacheManager();
   
 	static class MyAuthenticator extends Authenticator {
         public PasswordAuthentication getPasswordAuthentication() {
@@ -127,7 +127,7 @@ public class Main
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-      mCaching.start();
+      mCacheManager.start();
   		webServer.startServer();
 	}
 }

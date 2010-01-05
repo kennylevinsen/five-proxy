@@ -16,12 +16,11 @@ public class MusicDB {
   public static int entries = 0;
   public static Connection getConnection() {
     try {
-        Class.forName("org.sqlite.JDBC");
-        conn = DriverManager.getConnection("jdbc:sqlite:music.db");     
+      Class.forName("SQLite.JDBCDriver");
+      conn = DriverManager.getConnection("jdbc:sqlite:/music.db","","");      
     } catch (Exception e) {
       e.printStackTrace();
     }
-
     return conn;
   }
   public static void createTables() {
@@ -44,8 +43,7 @@ public class MusicDB {
     try {
       String str = "insert into songs values(?,?,?,?,?,?,?,?,?,?,?)";
       PreparedStatement ps = con.prepareStatement(str);
-      Statement st = con.createStatement();
-      st.execute("delete from songs");
+      ps.execute("delete from songs");
       for (i = 0; i < song.length; i++) {
         Protos.Song s = (Protos.Song) song[i];
         ps.setLong(1,s.getId());
@@ -61,7 +59,6 @@ public class MusicDB {
         ps.setInt(11,s.getTrack());
 
         ps.executeUpdate();
-
       }
       con.close();
     } catch (java.sql.SQLException e) {
@@ -75,8 +72,7 @@ public class MusicDB {
     try {
       String str = "insert into artists values(?,?,?,?,?)";
       PreparedStatement ps = con.prepareStatement(str);
-      Statement st = con.createStatement();
-      st.execute("delete from artists");
+      ps.execute("delete from artists");
       for (i = 0; i < artist.length; i++) {
         Protos.Artist a = (Protos.Artist) artist[i];
         ps.setLong(1,a.getId());
@@ -86,7 +82,7 @@ public class MusicDB {
         ps.setLong(5,a.getDiscoveryDate());
         ps.executeUpdate();
       }
-
+      con.close();
     } catch (java.sql.SQLException e) {
       e.printStackTrace();
     }
@@ -96,27 +92,23 @@ public class MusicDB {
     Object[] album = albums.toArray();
     int i = 0;
     try {
-      try {
-        String str = "insert into albums values(?,?,?,?,?,?,?)";
-        PreparedStatement ps = con.prepareStatement(str);
-        Statement st = con.createStatement();
-        st.execute("delete from albums");
-        for (i = 0; i < album.length; i++) {
-          Protos.Album a = (Protos.Album) album[i];
+      String str = "insert into albums values(?,?,?,?,?,?,?)";
+      PreparedStatement ps = con.prepareStatement(str);
+      ps.execute("delete from albums");
+      for (i = 0; i < album.length; i++) {
+        Protos.Album a = (Protos.Album) album[i];
 
-          ps.setLong(1,a.getId());
-          ps.setLong(2,a.getSyncTime());
-          ps.setLong(3, a.getArtistId());
-          ps.setString(4,a.getMbid());
-          ps.setString(5,a.getName());
-          ps.setLong(6,a.getDiscoveryDate());
-          ps.setLong(7, a.getReleaseDate());
+        ps.setLong(1,a.getId());
+        ps.setLong(2,a.getSyncTime());
+        ps.setLong(3, a.getArtistId());
+        ps.setString(4,a.getMbid());
+        ps.setString(5,a.getName());
+        ps.setLong(6,a.getDiscoveryDate());
+        ps.setLong(7, a.getReleaseDate());
 
-          ps.executeUpdate();
-        }
-      } finally {
-        con.close();
-      }    
+        ps.executeUpdate();
+      }
+      con.close();
     } catch (java.sql.SQLException e) {
       e.printStackTrace();
     }
@@ -142,8 +134,6 @@ public class MusicDB {
     rs.next();
   
     String songName = rs.getString("songName");
-    rs.close();
-    con.close();
     return songName;
     } catch (java.sql.SQLException e) {
         e.printStackTrace();
@@ -161,8 +151,6 @@ public class MusicDB {
     rs.next();
 
     long fileSize = rs.getLong("fileSize");
-    rs.close();
-    con.close();
     return fileSize;
     } catch (java.sql.SQLException e) {
         e.printStackTrace();
@@ -174,29 +162,22 @@ public class MusicDB {
     Connection con = getConnection();
     StringBuffer playlist = new StringBuffer();
     try {
-      playlist.append("[playlist]\n");
-      try {
-        String str = "select artists.name, songs.title, songs.length, songs.id from artists join songs where artists.id == songs.artistId AND (artists.name LIKE '%"+search+"%' OR songs.title LIKE '%"+search+"%')";
-        Statement st = con.createStatement();
-        ResultSet rs = st.executeQuery(str);
-        try {
-          int i = 0;
-          while(rs.next()){
-            i++;
-            String num = Integer.toString(rs.getRow());
-            playlist.append("File" + num + "=http://"+Settings.username+":"+Settings.password+"@joushou.org"+":"+Settings.listenPort+"/songs/" + rs.getInt(4) + "\n" );
-            playlist.append("Title" + num + "=" + rs.getString(1) + " - " + rs.getString(2) + "\n");
-            playlist.append("Length" + num + "=" + rs.getLong(3) + "\n");
-          }
-          playlist.append("NumberOfEntries=" + Integer.toString(i) + "\n");
-          playlist.append("Version=2\n");
-        } finally {
-          rs.close();
-        }
-      } finally {
-        con.close();
-      }
-      return playlist.toString();
+    playlist.append("[playlist]\n");
+    ResultSet rs;
+    String str = "select artists.name, songs.title, songs.length, songs.id  from artists join songs where artists.id == songs.artistId AND (artists.name LIKE '%"+search+"%' OR songs.title LIKE '%"+search+"%')";
+    Statement st = con.createStatement();
+    rs = st.executeQuery(str);
+    int i = 0;
+    while(rs.next()){
+      i++;
+      String num = Integer.toString(rs.getRow());
+      playlist.append("File" + num + "=http://"+Settings.username+":"+Settings.password+"@joushou.org"+":"+Settings.listenPort+"/songs/" + rs.getLong("songs.id") + "\n" );
+      playlist.append("Title" + num + "=" + rs.getString("artists.name") + " - " + rs.getString("songs.title") + "\n");
+      playlist.append("Length" + num + "=" + rs.getLong("songs.length") + "\n");
+    }
+    playlist.append("NumberOfEntries=" + Integer.toString(i) + "\n");
+    playlist.append("Version=2\n");
+    return playlist.toString();
     } catch (java.sql.SQLException e) {
       e.printStackTrace();
     }
