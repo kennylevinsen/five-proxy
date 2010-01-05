@@ -16,8 +16,8 @@ public class MusicDB {
   public static int entries = 0;
   public static Connection getConnection() {
     try {
-		  Class.forName("SQLite.JDBCDriver");
-			conn = DriverManager.getConnection("jdbc:sqlite:/music.db","","");      
+      Class.forName("SQLite.JDBCDriver");
+      conn = DriverManager.getConnection("jdbc:sqlite:/music.db","","");      
     } catch (Exception e) {
       e.printStackTrace();
     }
