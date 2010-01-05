@@ -1,5 +1,5 @@
 package org.joushou.FiveProxy;
-
+ 
 import java.net.Socket;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -17,7 +17,7 @@ import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.io.DataInputStream;
 import java.io.FileOutputStream;
-
+ 
 class Worker extends Thread {
   
   private Socket s;
@@ -28,10 +28,10 @@ class Worker extends Thread {
 		notify();
 	}
 	private static boolean connFinished;
-
+ 
 	void handleClient() {
 		client = s.getInetAddress();
-
+ 
 		connFinished = false;
 		try {
 			BufferedReader input = new BufferedReader(new InputStreamReader(s.getInputStream()));
@@ -51,14 +51,14 @@ class Worker extends Thread {
                             }
                         }
 		} catch(IOException e) {}
-
+ 
 	}
 	public synchronized void run() {
 		while (true){
 			if (s != null) {
 				handleClient();	
 				s = null;
-				
+ 
 				if (webServer.threads.size() >= webServer.maxThreads) {
 					System.out.println("Too many threads; exiting this: "+ this.getId());
 					return;
@@ -75,15 +75,15 @@ class Worker extends Thread {
 			}
 		}
 	}
-	
+ 
 	private synchronized int getBandwidth() {
 	  return(Settings.availableBandwidth/webServer.workingThreads);
 	}
-	
+ 
 	private synchronized void releaseBandwidth() {
 	  webServer.workingThreads--;
 	}
-	
+ 
 	private void handleHttp(BufferedReader input, BufferedOutputStream output) {
     int method = 0;
     try {
@@ -170,7 +170,7 @@ class Worker extends Thread {
                 int bandwidth = getBandwidth();
                 long sleep = (100/bandwidth) * 10 ;
                 Caching.cache(id);
-
+ 
                 while (((b = in.read()) != -1) ){
                   if (!disconnected){
                     try {
@@ -179,7 +179,7 @@ class Worker extends Thread {
                       disconnected = true;
                     }
                   }
-
+ 
                   if (timingCounter == 0) {
                     timingTest = System.currentTimeMillis();
                     timingCounter++;
@@ -216,7 +216,7 @@ class Worker extends Thread {
                 Caching.doneCaching(id);
                 bos.close();
                 //Eow
-                Main.mCacheManager.clean();
+                Main.mCaching.clean();
                 if (disconnected) {
       			      connFinished = true;
       			      return;
@@ -285,10 +285,10 @@ class Worker extends Thread {
     	//Disconnected 
   	} catch (Exception e) {e.printStackTrace();}
 	}
-
+ 
   private static String buildHttpHeader(int returnCode, String ctype, long clength) {
 	  String s = "HTTP/1.1 ";
-		
+ 
 		switch (returnCode) {
 		case 200:
 			s = s + "200 OK";
@@ -317,7 +317,7 @@ class Worker extends Thread {
 			s = s + "501 Not Implemented";
 			break;
 		}
-		
+ 
 		s = s + "\r\n";
 		if(clength != -1)
 			s = s + "Content-Length: " + clength + "\r\n";
@@ -329,7 +329,7 @@ class Worker extends Thread {
 		  s = s + "Connection: Keep-Alive\r\n";
 		}
 		s = s + "\r\n";
-		
+ 
 		return s;
 	}
 }

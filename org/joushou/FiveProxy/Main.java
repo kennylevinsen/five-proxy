@@ -1,5 +1,5 @@
 package org.joushou.FiveProxy;
-
+ 
 import java.lang.String;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -15,12 +15,12 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.net.HttpURLConnection;
 import java.io.FileNotFoundException;
-
+ 
 import com.google.protobuf.CodedInputStream;
-
+ 
 public class Main
 {
-  public static cacheManager mCacheManager = new cacheManager();
+  public static Caching mCaching = new Caching();
   
 	static class MyAuthenticator extends Authenticator {
         public PasswordAuthentication getPasswordAuthentication() {
@@ -28,7 +28,7 @@ public class Main
             return (new PasswordAuthentication(Settings.username, Settings.password.toCharArray()));
         }
     }
-
+ 
   public static void log(String log) {
     try {
       File logfile = new File(Settings.logFile);
@@ -47,13 +47,13 @@ public class Main
 		in = (HttpURLConnection)url.openConnection();
 		return in;
 	}
-	
-	
+ 
+ 
 	public static Map parseData (InputStream in)
 	{
 		Map titles = new HashMap();
    
-
+ 
 		try {
 			CodedInputStream stream = CodedInputStream.newInstance(in);
 			int count = stream.readRawLittleEndian32();
@@ -68,22 +68,22 @@ public class Main
 						Protos.Artist mArtist = record.getArtist();
             titles.put(mArtist.getId(), mArtist);
 						break;
-				
+ 
 					case ALBUM:
 						Protos.Album mAlbum = record.getAlbum();
             titles.put(mAlbum.getId(), mAlbum);
 						break;
-				
+ 
 					case SONG:
 						Protos.Song mSong = record.getSong();
 						titles.put(mSong.getId(), mSong);
 						break;
-				
+ 
 					case PLAYLIST:
 						Protos.Playlist mPlaylist = record.getPlaylist();
 						titles.put(mPlaylist.getId(), mPlaylist);
 						break;
-				
+ 
 					case PLAYLIST_SONG:
 						Protos.PlaylistSong mPlaylistSong = record.getPlaylistSong();
 						titles.put(mPlaylistSong.getId(), mPlaylistSong);
@@ -103,15 +103,15 @@ public class Main
       Map albumMap = parseData(getData("/feeds/albums").getInputStream());
 			Map playlistMap = parseData(getData("/feeds/playlists").getInputStream());
 			Map playlistSongMap = parseData(getData("/feeds/playlistSongs").getInputStream());
-
+ 
 			Collection songs = songMap.values();
       Collection artists = artistMap.values();
       Collection albums = albumMap.values();
 			Collection playlists = playlistMap.values();
 			Collection playlistSongs = playlistSongMap.values();
-
+ 
 			Object[] song =  songs.toArray();
-
+ 
 			int i = 0;
 			table.append("<table border><tr><th>Title</th></tr>");
 			for (i = 0; i < song.length; i++) {
@@ -119,7 +119,7 @@ public class Main
 				table.append("<tr><td><a href='/songs/"+s.getId()+"' target='_blank'>"+s.getTitle()+"</a></td></tr>");
 			}
 			table.append("</table>");
-			
+ 
 			MusicDB.createTables();
 			MusicDB.insertSongs(songs);
       MusicDB.insertArtists(artists);
@@ -127,7 +127,7 @@ public class Main
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-      mCacheManager.start();
+      mCaching.start();
   		webServer.startServer();
 	}
 }
