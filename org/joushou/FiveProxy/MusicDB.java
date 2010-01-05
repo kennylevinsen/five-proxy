@@ -171,7 +171,7 @@ public class MusicDB {
     while(rs.next()){
       i++;
       String num = Integer.toString(rs.getRow());
-      playlist.append("File" + num + "=http://joushou.org:4001/songs/" + rs.getLong("songs.id") + "\n" );
+      playlist.append("File" + num + "=http://"+Settings.username+":"+Settings.password+"@joushou.org"+":"+Settings.listenPort+"/songs/" + rs.getLong("songs.id") + "\n" );
       playlist.append("Title" + num + "=" + rs.getString("artists.name") + " - " + rs.getString("songs.title") + "\n");
       playlist.append("Length" + num + "=" + rs.getLong("songs.length") + "\n");
     }
