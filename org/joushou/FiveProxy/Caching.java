@@ -1,26 +1,86 @@
 package org.joushou.FiveProxy;
 
-class Caching {
-  private static boolean[] caching = new boolean[MusicDB.entries];
-    public static void init() {
-      int i;
-      for(i = 0; i < caching.length; i++)
-        caching[i] = false;
+import java.io.File;
+import java.sql.DriverManager;
+import java.sql.Connection;
+import java.sql.Statement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.io.IOException;
+
+class Caching extends Thread {
+  private static boolean[] caching;
+  public static void init() {
+    caching = new boolean[MusicDB.entries];
+    int i;
+    for(i = 0; i < caching.length; i++)
+      caching[i] = false;
+  }
+
+  public static synchronized boolean isCaching(int id) {
+    return caching[id];
+  }
+
+  public static synchronized boolean cache(int id) {
+    if (caching[id] == false) {
+      caching[id] = true;
+      return true;
     }
+    return false;
+  }
 
-      public static synchronized boolean isCaching(int id) {
-        return caching[id];
-      }
+  public static synchronized void doneCaching(int id) {
+    caching[id] = false;
+  }
+  
+  public synchronized void clean() {
+    notify();
+  }
 
-      public static synchronized boolean cache(int id) {
-        if (caching[id] == false) {
-          caching[id] = true;
-          return true;
-        }
-        return false;
+  public synchronized void run() {
+    while (true) {
+        try {
+          Main.log("CacheManager: " + getPercentageUsed() + "% used ["+getCacheSize() / 1048576+"MiB/"+Settings.maxCache/1048576+"MiB]");
+          if (getCacheSize() > Settings.maxCache) {
+            Main.log("CacheManager: Initiating cleanup-routine...");
+            Class.forName("org.sqlite.JDBC");
+            Connection con = DriverManager.getConnection("jdbc:sqlite:music.db");
+            Statement st = con.createStatement();
+            String sql = "select songId, count(*) TotalCount from playLog group by songId having (strftime('%s','now') - max(time)) > "+Settings.bufferTime+" "+(Settings.preservedPlaycount != -1 ? "and count(*) < " + Settings.preservedPlaycount : "")+" order by TotalCount asc, max(time) asc";
+            ResultSet rs = st.executeQuery(sql);
+            while(rs.next() && getCacheSize() > Settings.maxCache) {
+              int id = rs.getInt("songId");
+              if(!Caching.isCaching(id)) {
+                Main.log("CacheManager: Deleting '" + MusicDB.getTitleFromId(id) + "' from cache ("+rs.getInt("TotalCount")+" playbacks since caching)");
+                File f = new File(Settings.cacheFolder + id);
+                f.delete();
+                con.createStatement().executeUpdate("delete from playLog where songId=="+id);
+              }
+            }
+            con.close();
+            if(getCacheSize() > Settings.maxCache) {
+              Main.log("CacheManager: Still too big after cleaning up; Consider increasing the cache size"); 
+            } else {
+              Main.log("CacheManager: After cleanup: " +getPercentageUsed() + "% used");
+            }
+          }
+        wait();
+        } catch (java.sql.SQLException e) {
+          e.printStackTrace();
+        } catch(Exception e) {e.printStackTrace();}
       }
-
-      public static synchronized void doneCaching(int id) {
-        caching[id] = false;
-      }
+  }
+  private static long getCacheSize() {
+    long folderSize = 0;
+    File[] filelist = new File(Settings.cacheFolder).listFiles();
+    int i;
+    for(i=0;i<filelist.length;i++) {
+      folderSize += filelist[i].length();
+    }
+    return folderSize;
+  }
+  public static Float getPercentageUsed() {
+    Float percentage = ((float)getCacheSize() / (float)Settings.maxCache) *  (float)100.0;
+    return percentage;
+  }
 }

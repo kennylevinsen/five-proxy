@@ -3,10 +3,10 @@ package org.joushou.FiveProxy;
 import java.lang.String;
 
 class Settings {
-  public static final int listenPort = 4001; // Port to listen for clients on
+  public static final int listenPort = 4002; // Port to listen for clients on
   public static final String username = "fiveuser"; // Five-server username
-  public static final String password = ""; // Five-server password
-  public static final String remoteHost = "http://cia.gov:0"; // Yes, they run five-server :)
+  public static final String password = "tenshi"; // Five-server password
+  public static final String remoteHost = "http://one.joushou.org:65504"; // Yes, they run five-server :)
   public static final String logFile = "five.log"; // Where to log...
 
   public static final int bufferTime = 10; // How old a song should be before it can be cleaned out

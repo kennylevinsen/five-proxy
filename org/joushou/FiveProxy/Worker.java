@@ -216,7 +216,7 @@ class Worker extends Thread {
                 Caching.doneCaching(id);
                 bos.close();
                 //Eow
-                Main.mCacheManager.clean();
+                Main.mCaching.clean();
                 if (disconnected) {
       			      connFinished = true;
       			      return;

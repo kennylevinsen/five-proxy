@@ -23,9 +23,10 @@ public class webServer {
 		}
 		ServerSocket serverSocket = null;
 		try {
-			serverSocket = new ServerSocket(4001);
+			serverSocket = new ServerSocket(Settings.listenPort);
 		} catch (IOException e) {
-			System.out.println("Couldn't listen");
+			System.out.println("Couldn't listen on port "+ Settings.listenPort);
+			e.printStackTrace();
 			System.exit(-1);
 		}
 	  Caching.init();
