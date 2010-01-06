@@ -51,7 +51,7 @@ public class webServer {
 				}
  
 			} catch (IOException e) {
-				System.out.println(e.getMessage());
+				e.printStackTrace();
 				System.exit(-1);
 			}
 		}
