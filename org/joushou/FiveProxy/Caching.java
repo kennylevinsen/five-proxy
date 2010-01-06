@@ -10,26 +10,29 @@ import java.io.IOException;
 import java.util.ArrayList; 
  
 class Caching extends Thread {
-  private static ArrayList<Boolean> caching;
+  private static ArrayList<Integer> caching;
   
   public static void init() {
-    caching = new ArrayList<Boolean>(MusicDB.entries);
+    caching = new ArrayList<Integer>();
   }
  
   public static synchronized boolean isCaching(int id) {
     if(caching.contains(id)){
-      return caching.get(id);
+      caching.remove(id);
+      return true;
     } else {
       return false;
     }
   }
  
   public static synchronized void cache(int id) {
-    caching.set(id, true);
+    if(!caching.contains(id))
+      caching.add(id);
   }
  
   public static synchronized void doneCaching(int id) {
-    caching.set(id, false);
+    if (caching.contains(id))
+      caching.remove(id);
   }
   
   public synchronized void clean() {
