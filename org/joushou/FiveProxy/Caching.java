@@ -17,7 +17,11 @@ class Caching extends Thread {
   }
  
   public static synchronized boolean isCaching(int id) {
-    return caching.get(id);
+    if(caching.contains(id)){
+      return caching.get(id);
+    } else {
+      return false;
+    }
   }
  
   public static synchronized void cache(int id) {
