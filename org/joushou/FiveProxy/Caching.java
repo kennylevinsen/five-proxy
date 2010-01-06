@@ -7,30 +7,25 @@ import java.sql.Statement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.io.IOException;
+import java.util.ArrayList; 
  
 class Caching extends Thread {
-  private static boolean[] caching;
+  private static ArrayList<Boolean> caching;
+  
   public static void init() {
-    caching = new boolean[MusicDB.entries];
-    int i;
-    for(i = 0; i < caching.length; i++)
-      caching[i] = false;
+    caching = new ArrayList<Boolean>(MusicDB.entries);
   }
  
   public static synchronized boolean isCaching(int id) {
-    return caching[id];
+    return caching.get(id);
   }
  
-  public static synchronized boolean cache(int id) {
-    if (caching[id] == false) {
-      caching[id] = true;
-      return true;
-    }
-    return false;
+  public static synchronized void cache(int id) {
+    caching.set(id, true);
   }
  
   public static synchronized void doneCaching(int id) {
-    caching[id] = false;
+    caching.set(id, false);
   }
   
   public synchronized void clean() {
@@ -44,21 +39,23 @@ class Caching extends Thread {
           if (getCacheSize() > Settings.maxCache) {
             Main.log("CacheManager: Initiating cleanup-routine...");
             Object[] delIds = MusicDB.getCleanupIds();
-            int i = 0;
-            while(i <= delIds.length  && getCacheSize() > Settings.maxCache) {
-              int id = new Integer((Integer)delIds[i]);
-              System.out.println("Hmm.. sombodys tellin' me to delete song #"+ id);
-              if(!Caching.isCaching(id)) {
-                Main.log("CacheManager: Deleting '" + MusicDB.getTitleFromId(id) + "' from cache");
-                File f = new File(Settings.cacheFolder + id);
-                f.delete();
-                MusicDB.deleteLogById(id);
+            if (!(delIds.length == 0)) {
+              int i = 0;
+              while(i <= delIds.length  && getCacheSize() > Settings.maxCache) {
+                int id = new Integer((Integer)delIds[i]);
+                System.out.println("Hmm.. sombodys tellin' me to delete song #"+ id);
+                if(!Caching.isCaching(id)) {
+                  Main.log("CacheManager: Deleting '" + MusicDB.getTitleFromId(id) + "' from cache");
+                  File f = new File(Settings.cacheFolder + id);
+                  f.delete();
+                  MusicDB.deleteLogById(id);
+                }
               }
-            }
-            if(getCacheSize() > Settings.maxCache) {
-              Main.log("CacheManager: Still too big after cleaning up; Consider increasing the cache size"); 
-            } else {
-              Main.log("CacheManager: After cleanup: " +getPercentageUsed() + "% used");
+              if(getCacheSize() > Settings.maxCache) {
+                Main.log("CacheManager: Still too big after cleaning up; Consider increasing the cache size"); 
+              } else {
+                Main.log("CacheManager: After cleanup: " +getPercentageUsed() + "% used");
+              }
             }
           }
         wait();
