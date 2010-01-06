@@ -43,10 +43,10 @@ class Caching extends Thread {
           Main.log("CacheManager: " + getPercentageUsed() + "% used ["+getCacheSize() / 1048576+"MiB/"+Settings.maxCache/1048576+"MiB]");
           if (getCacheSize() > Settings.maxCache) {
             Main.log("CacheManager: Initiating cleanup-routine...");
-            Integer[] delIds = MusicDB.getCleanupIds();
+            Object[] delIds = MusicDB.getCleanupIds();
             int i = 0;
             while(i <= delIds.length  && getCacheSize() > Settings.maxCache) {
-              int id = delIds[i];
+              int id = (Integer)delIds[i];
               if(!Caching.isCaching(id)) {
                 Main.log("CacheManager: Deleting '" + MusicDB.getTitleFromId(id) + "' from cache");
                 File f = new File(Settings.cacheFolder + id);
