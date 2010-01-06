@@ -46,7 +46,8 @@ class Caching extends Thread {
             Object[] delIds = MusicDB.getCleanupIds();
             int i = 0;
             while(i <= delIds.length  && getCacheSize() > Settings.maxCache) {
-              int id = (Integer)delIds[i];
+              int id = new Integer((Integer)delIds[i]);
+              System.out.println("Hmm.. sombodys tellin' me to delete song #"+ id);
               if(!Caching.isCaching(id)) {
                 Main.log("CacheManager: Deleting '" + MusicDB.getTitleFromId(id) + "' from cache");
                 File f = new File(Settings.cacheFolder + id);
