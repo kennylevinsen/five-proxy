@@ -223,7 +223,7 @@ public class MusicDB {
       Connection con = getConnection();
       Statement st  = con.createStatement();
       String sql = "select songId, count(*) TotalCount from playLog group by songId having (strftime('%s','now') - max(time)) > "+Settings.bufferTime+" "+(Settings.preservedPlaycount != -1 ? "and count(*) < " + Settings.preservedPlaycount : "")+" order by TotalCount asc, max(time) asc";
-      ArrayList songIds = new ArrayList();
+      ArrayList<Integer> songIds = new ArrayList<Integer>();
       try {
         ResultSet rs = st.executeQuery(sql);
         int i = 0;
