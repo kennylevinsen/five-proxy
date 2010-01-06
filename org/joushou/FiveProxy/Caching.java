@@ -18,7 +18,6 @@ class Caching extends Thread {
  
   public static synchronized boolean isCaching(int id) {
     if(caching.contains(id)){
-      caching.remove(id);
       return true;
     } else {
       return false;
