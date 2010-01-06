@@ -31,7 +31,7 @@ class Caching extends Thread {
  
   public static synchronized void doneCaching(int id) {
     if (caching.contains(id))
-      caching.remove(id);
+      caching.remove((Integer)id);
   }
   
   public synchronized void clean() {
