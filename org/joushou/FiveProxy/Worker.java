@@ -192,7 +192,8 @@ class Worker extends Thread {
                     
                     if(allowedMsPerKB > timing) {
                       long ms = ((long) allowedMsPerKB - timing);
-                      sleep (ms);
+                      System.out.println(ms);
+                      this.sleep (ms);
                     }
                   } else {
                     timingCounter++;
