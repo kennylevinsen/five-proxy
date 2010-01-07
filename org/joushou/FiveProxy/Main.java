@@ -121,9 +121,13 @@ public class Main
 			table.append("</table>");
  
 			MusicDB.createTables();
+			System.out.println("tables");
 			MusicDB.insertSongs(songs);
+			System.out.println("songs");
       MusicDB.insertArtists(artists);
+			System.out.println("artists");
       MusicDB.insertAlbums(albums);
+			System.out.println("albums");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
