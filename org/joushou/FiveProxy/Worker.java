@@ -137,7 +137,7 @@ class Worker extends Thread {
                   file.delete();
                   Main.log("Deleting corrupted cached version of '"+ requestSong + "' id: "+ segments[2]);
                 }
-              Main.log("Requested '" + requestSong + "' from " + client.getHostAddress() + " ["+(file.exists() ? "LOCAL" : "REMOTE")+"]");                                              
+              Main.log("Requested '" + requestSong + "' from " + client.getHostAddress() + " ["+(file.exists() ? (Caching.isCaching(id) ? "PARTIAL-" : "") + "LOCAL" : "REMOTE")+"]");                                              
               if(file.exists()) {
                 FileInputStream fis = new FileInputStream(file);
                 BufferedInputStream bis = new BufferedInputStream(fis, 2048);
