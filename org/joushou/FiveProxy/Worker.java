@@ -137,7 +137,7 @@ class Worker extends Thread {
                   file.delete();
                   Main.log("Deleting corrupted cached version of '"+ requestSong + "' id: "+ segments[2]);
                 }
-              Main.log("Requested '" + requestSong + "' from " + client.getHostAddress() + " ["+(file.exists() ? (Caching.isCaching(id) ? "PARTIAL-" : "LOCAL") : "REMOTE")+"]");                                              
+              Main.log("Requested '" + requestSong + "' from " + client.getHostAddress() + " ["+(file.exists() ? (Caching.isCaching(id) ? "PARTIAL" : "LOCAL") : "REMOTE")+"]");                                              
               if(file.exists()) {
                 FileInputStream fis = new FileInputStream(file);
                 BufferedInputStream bis = new BufferedInputStream(fis, 2048);
@@ -168,9 +168,8 @@ class Worker extends Thread {
                 long timingTest = 0;
                 long timing;
                 int bandwidth = getBandwidth();
-                long sleep = (100/bandwidth) * 10 ;
                 Caching.cache(id);
- 
+                timingTest = System.currentTimeMillis();
                 while (((b = in.read()) != -1) ){
                   if (!disconnected){
                     try {
@@ -181,27 +180,23 @@ class Worker extends Thread {
                   }
  
                   if (timingCounter == 0) {
-                    timingTest = System.currentTimeMillis();
                     timingCounter++;
                   } else if (timingCounter == 1024) {
-                    timing = (System.currentTimeMillis() - timingTest) + sleep;
+                    timing = (System.currentTimeMillis() - timingTest);
+                    timingTest = System.currentTimeMillis();
                     timingCounter = 0;
                     if (timing == 0)
                       timing = 1;
-                    long currentKbps = (1000/timing);
-                    if(currentKbps > bandwidth) {
-                      sleep = sleep + 1;
-                    } else if(currentKbps == bandwidth) {
-                      //Kewl
-                    } else {
-                      sleep = sleep - 1;
-                      if (sleep < 0) {
-                        sleep = 0;
-                      }
+                    float allowedMsPerKB = (float)1000.0/(float)bandwidth;
+                    
+                    if(allowedMsPerKB > timing) {
+                      long ms = ((long) allowedMsPerKB - timing);
+                      System.out.println("Sleeping: " + ms + "ms");
+                      sleep (ms);
                     }
+                    
                     if(bandwidth != getBandwidth()){
                       bandwidth = getBandwidth();
-                      sleep = (100/bandwidth) * 10;
                     }
                   } else {
                     timingCounter++;
