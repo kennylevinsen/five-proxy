@@ -76,8 +76,8 @@ class Worker extends Thread {
 		}
 	}
  
-	private synchronized int getBandwidth() {
-	  return(Settings.availableBandwidth/webServer.workingThreads);
+	private synchronized float getBandwidth() {
+	  return((float)Settings.availableBandwidth/(float)webServer.workingThreads);
 	}
  
 	private synchronized void releaseBandwidth() {
@@ -167,7 +167,7 @@ class Worker extends Thread {
                 int timingCounter = 0;
                 long timingTest = 0;
                 long timing;
-                int bandwidth = getBandwidth();
+                float bandwidth = getBandwidth();
                 Caching.cache(id);
                 timingTest = System.currentTimeMillis();
                 while (((b = in.read()) != -1) ){
@@ -188,11 +188,10 @@ class Worker extends Thread {
                     bandwidth = getBandwidth();
                     if (timing == 0)
                       timing = 1;
-                    float allowedMsPerKB = (float)1000.0/(float)bandwidth;
+                    float allowedMsPerKB = (float)1000.0/bandwidth;
                     
                     if(allowedMsPerKB > timing) {
                       long ms = (long)((allowedMsPerKB - (float)timing));
-                      System.out.println(ms);
                       this.sleep (ms);
                     }
                   } else {
