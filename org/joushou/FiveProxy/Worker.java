@@ -180,10 +180,10 @@ class Worker extends Thread {
                   }
  
                   if (timingCounter == 0) {
+                    timingTest = System.currentTimeMillis();
                     timingCounter++;
                   } else if (timingCounter == 1024) {
                     timing = (System.currentTimeMillis() - timingTest);
-                    timingTest = System.currentTimeMillis();
                     timingCounter = 0;
                     bandwidth = getBandwidth();
                     if (timing == 0)
@@ -191,7 +191,7 @@ class Worker extends Thread {
                     float allowedMsPerKB = (float)1000.0/(float)bandwidth;
                     
                     if(allowedMsPerKB > timing) {
-                      long ms = ((long) allowedMsPerKB - timing);
+                      long ms = (long)((allowedMsPerKB - (float)timing));
                       System.out.println(ms);
                       this.sleep (ms);
                     }
