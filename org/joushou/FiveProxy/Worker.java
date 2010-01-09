@@ -29,19 +29,17 @@ class Worker extends Thread {
 		this.s = s;
 		notify();
 	}
-	private static boolean connFinished;
+	private static boolean keepAlive = true;
  
 	void handleClient() {
 		client = s.getInetAddress();
 		clientIp = client.getHostAddress();
- 
-		connFinished = false;
 		try {
 			BufferedReader input = new BufferedReader(new InputStreamReader(s.getInputStream()));
 			BufferedOutputStream output = new BufferedOutputStream(s.getOutputStream(), 2048);
         while (true) {
             input.mark(10);
-            if(connFinished) {
+            if(!keepAlive) {
                 output.close();
                 input.close();
                 break;
@@ -98,13 +96,19 @@ class Worker extends Thread {
         return;
       }
       boolean authorized = false;
+      boolean keepAliveHeader = false;
       while (!(reqHead = input.readLine()).equals("")){
         if((seg = reqHead.split(" ")).length == 3) {
           if(seg[0].equals("Authorization:") && seg[1].equals("Basic") && (seg[2].equals("Zml2ZXVzZXI6dGVuc2hp") || seg[2].equals("Zml2ZXVzZXI6MzBiZGJjMGJhZWQ5NWJkNDFjMDVhYzBmZmQ2NDgyZWNiYzg4Y2NhOQ=="))) {
             authorized = true;
+          if(seg[0].equals("Connection:") && seg[1].equals("Keep-Alive"))
+            keepAliveHeader = true;
           }
         }
       }
+      if(!keepAliveHeader)
+        keepAlive = false;
+        
       if (!authorized){
         Main.log("AccessDenied: " + client.getHostAddress() + " ("+line1+")");
         output.write(buildHttpHeader(401,"",0).getBytes());
@@ -210,7 +214,7 @@ class Worker extends Thread {
                 //Eow
                 Main.mCaching.clean();
                 if (disconnected) {
-      			      connFinished = true;
+      			      keepAlive = false;
       			      return;
                 }
               }
@@ -236,7 +240,7 @@ class Worker extends Thread {
                   output.write(buildHttpHeader(200,"audio/x-scpls",-1).getBytes());
                   output.write(MusicDB.getPlaylistFromArtist("").getBytes());
                 }
-                connFinished = true;
+                keepAlive = false;
               } else if(segments[1].equals("imageThumb") || segments[1].equals("image")) {
                 InputStream in = null;
                 HttpURLConnection con = Main.getData(req[1]);
@@ -260,7 +264,7 @@ class Worker extends Thread {
       			output.write(("Request path: " + req[1] + "<br />\r\n").getBytes());
       			output.write(("Thread ID: " + this.getName() + "</body></html>").getBytes());
       			output.write((Main.table.toString()).getBytes());
-            connFinished = true;
+            keepAlive = false;
   				}                                                                          
   				//output.close();
   			} else {
@@ -290,7 +294,7 @@ class Worker extends Thread {
 			break;
 		case 400:
 			s = s + "400 Bad Request";
-      connFinished = true;
+      keepAlive = false;
 			break;
 	  case 401:
 	    s = s + "401 Unauthorized\r\n";
@@ -315,7 +319,7 @@ class Worker extends Thread {
 			s = s + "Content-Length: " + clength + "\r\n";
 		if(!(ctype.length() == 0))
 		  s = s + "Content-Type: " + ctype + "\r\n";
-    if (connFinished) {
+    if (!keepAlive) {
       s = s + "Connection: close\r\n";
 		} else {
 		  s = s + "Connection: Keep-Alive\r\n";
