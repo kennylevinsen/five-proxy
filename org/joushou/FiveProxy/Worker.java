@@ -60,9 +60,9 @@ class Worker extends Thread {
 		while (true){
 			if (s != null) {
 				handleClient();	
-				this.clientIp = null;
-				this.requestLine = null;
-				this.s = null;
+				clientIp = null;
+				requestLine = null;
+				s = null;
 				webServer.threads.addElement(this);
 			} else {
 				try {

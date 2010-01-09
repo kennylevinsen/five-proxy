@@ -58,9 +58,10 @@ public class webServer {
 					  StringBuffer requestLineHTML = new StringBuffer();
 					  for (i = 0; i < allThreads.size(); i++) {
 					    Worker worker = (Worker) allThreads.elementAt(i);
-					    if (worker.clientIp != null && worker.clientIp.equals(clientSocket.getInetAddress().getHostAddress()))
+					    if (worker.clientIp != null && worker.clientIp.equals(clientSocket.getInetAddress().getHostAddress())) {
 					      requestLineHTML.append(worker.requestLine + "<br />\n");
 					      connections++;
+					    }
 					  }
 					  System.out.println(connections);
             if (connections >= Settings.connLimit) {
