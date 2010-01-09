@@ -23,6 +23,7 @@ class Worker extends Thread {
   private Socket s;
   private InetAddress client;
   public String clientIp = null;
+  public String requestLine = null;
   public long socketOpenTime;
 	synchronized void setSocket(Socket s){
 		this.s = s;
@@ -60,7 +61,8 @@ class Worker extends Thread {
 			if (s != null) {
 				handleClient();	
 				this.clientIp = null;
-				s = null;
+				this.requestLine = null;
+				this.s = null;
 				webServer.threads.addElement(this);
 			} else {
 				try {
@@ -113,6 +115,7 @@ class Worker extends Thread {
       }
       if (req.length == 3) {
         if (line1.startsWith("GET")) {
+          requestLine = req[1];
     		  String[] segments = req[1].split("/");
     		  if (segments.length > 0) {
     		    if (segments[1].equals("songs")) {
