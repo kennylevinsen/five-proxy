@@ -135,6 +135,7 @@ class Worker extends Thread {
               if(file.exists() && !Caching.isCaching(id))
                 if(file.length() != fileSize){
                   file.delete();
+                  MusicDB.deleteLogById(id);
                   Main.log("Deleting corrupted cached version of '"+ requestSong + "' id: "+ segments[2]);
                 }
               Main.log("Requested '" + requestSong + "' from " + client.getHostAddress() + " ["+(file.exists() ? (Caching.isCaching(id) ? "PARTIAL" : "LOCAL") : "REMOTE")+"]");                                              
