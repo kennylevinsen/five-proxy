@@ -137,9 +137,21 @@ public class MusicDB {
       Connection con = getConnection();
       String str = "insert into playlog values(null, "+Integer.toString(songId)+",strftime('%s','now'),?)";
       PreparedStatement ps = con.prepareStatement(str);      
+      boolean queryDone = false;
       try {
         ps.setString(1,ip);
-        ps.executeUpdate();
+        while (true) {
+          try {
+            ps.executeUpdate();
+            break;
+          } catch (java.sql.SQLException sqle) {
+            if (sqle.getMessage().equals("database locked")) {
+              System.out.println("logPlay: Database locked");
+            } else {
+              throw sqle;
+            }
+          }
+        }
       } finally {  
         ps.close();
         con.close();
@@ -151,7 +163,19 @@ public class MusicDB {
     try {
       Statement st = con.createStatement();  
       String songName;
-      ResultSet rs = st.executeQuery("select title as songName from songs where `id` == "+id+" LIMIT 1");
+      ResultSet rs = null;
+      while (true) {
+        try {
+          rs = st.executeQuery("select title as songName from songs where `id` == "+id+" LIMIT 1");
+          break;
+        } catch (java.sql.SQLException sqle) {
+          if (sqle.getMessage().equals("database locked")) {
+            System.out.println("getTitleFromId: Database locked");
+          } else {
+            throw sqle;
+          }
+        }
+      }
       try {
         rs.next();
         songName = rs.getString("songName");
@@ -171,7 +195,18 @@ public class MusicDB {
       Statement st = con.createStatement();
       ResultSet rs;
       long fileSize;
-      rs = st.executeQuery("select fileSize from songs where `id` == "+id+" LIMIT 1");  
+      while (true) {
+        try {
+          rs = st.executeQuery("select fileSize from songs where `id` == "+id+" LIMIT 1");
+          break;
+        } catch (java.sql.SQLException sqle) {
+          if (sqle.getMessage().equals("database locked")) {
+            System.out.println("getSizeFromId: Database locked");
+          } else {
+            throw sqle;
+          }
+        }
+      }       
       try {
         rs.next(); 
         fileSize = rs.getLong("fileSize");
@@ -194,7 +229,19 @@ public class MusicDB {
       try {
         String str = "select artists.name, songs.title, songs.length, songs.id from artists join songs where artists.id == songs.artistId AND (artists.name LIKE '%"+search+"%' OR songs.title LIKE '%"+search+"%')";
         Statement st = con.createStatement();
-        ResultSet rs = st.executeQuery(str);
+        ResultSet rs = null;
+        while (true) {
+          try {
+            rs = st.executeQuery(str);
+            break;
+          } catch (java.sql.SQLException sqle) {
+            if (sqle.getMessage().equals("database locked")) {
+              System.out.println("getPlaylistFromArtist: Database locked");
+            } else {
+              throw sqle;
+            }
+          }
+        }
         try {
           int i = 0;
           while(rs.next()){
@@ -225,7 +272,20 @@ public class MusicDB {
       String sql = "select songId, count(*) TotalCount from playLog group by songId having (strftime('%s','now') - max(time)) > "+Settings.bufferTime+" "+(Settings.preservedPlaycount != -1 ? "and count(*) < " + Settings.preservedPlaycount : "")+" order by TotalCount asc, max(time) asc";
       ArrayList songIds = new ArrayList();
       try {
-        ResultSet rs = st.executeQuery(sql);
+        ResultSet rs = null;
+        while (true) {
+          try {
+            st.executeQuery(sql);
+            break;
+          } catch (java.sql.SQLException sqle) {
+            if (sqle.getMessage().equals("database locked")) {
+              System.out.println("getCleanupIds: Database locked");
+            } else {
+              throw sqle;
+            }
+          }
+        }
+
         int i = 0;
         while (rs.next()) {
           int id = rs.getInt("songId");
@@ -245,7 +305,18 @@ public class MusicDB {
       String str = "delete from playLog where songId=="+id;
       Statement st = con.createStatement();      
       try {
-        st.executeUpdate(str);
+        while (true) {
+          try {
+            st.executeUpdate(str);
+            break;
+          } catch (java.sql.SQLException sqle) {
+            if (sqle.getMessage().equals("database locked")) {
+              System.out.println("deleteLogById: Database locked");
+            } else {
+              throw sqle;
+            }
+          }
+        }
       } finally {  
         con.close();
       }
