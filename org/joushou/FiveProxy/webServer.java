@@ -64,7 +64,7 @@ public class webServer {
               BufferedOutputStream bos = new BufferedOutputStream(clientSocket.getOutputStream());
               BufferedReader br = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
               while (!br.readLine().equals("")){}
-              bos.write(("HTTP/1.1 403 Forbidden\r\nContent-Type: text/html; charset=UTF-8\r\nConnection: close\r\n\r\n<h1>Too many connections from your ip</h1>\nToo many requests from you ip.<br />\nPlease try again in a few moments, or contact the <a href=\""+Settings.webmaster+"\">webmaster</a>.\n<br /><hr /><i style=\"font-size: 10px\">five-proxy at <a href=\"http://"+Settings.hostname+":"+Settings.listenPort+"\">http://"+Settings.hostname+":"+Settings.listenPort+"</a></font></i>").getBytes());
+              bos.write(("HTTP/1.1 403 Forbidden\r\nContent-Type: text/html; charset=UTF-8\r\nConnection: close\r\n\r\n<h1>Too many connections from your ip</h1>\nToo many requests from your ip.<br />\nPlease try again in a few moments, or contact the <a href=\""+Settings.webmaster+"\">webmaster</a>.\n<br /><hr /><i style=\"font-size: 10px\">five-proxy at <a href=\"http://"+Settings.hostname+":"+Settings.listenPort+"\">http://"+Settings.hostname+":"+Settings.listenPort+"</a></font></i>").getBytes());
               bos.close();
               br.close();
               clientSocket.close();
