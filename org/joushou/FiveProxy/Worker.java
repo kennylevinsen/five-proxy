@@ -22,6 +22,7 @@ class Worker extends Thread {
   
   private Socket s;
   private InetAddress client;
+  public String clientIp = null;
   public long socketOpenTime;
 	synchronized void setSocket(Socket s){
 		this.s = s;
@@ -31,6 +32,7 @@ class Worker extends Thread {
  
 	void handleClient() {
 		client = s.getInetAddress();
+		clientIp = client.getHostAddress();
  
 		connFinished = false;
 		try {
@@ -57,14 +59,9 @@ class Worker extends Thread {
 		while (true){
 			if (s != null) {
 				handleClient();	
+				this.clientIp = null;
 				s = null;
- 
-				if (webServer.threads.size() >= webServer.maxThreads) {
-					System.out.println("Too many threads; exiting this: "+ this.getId());
-					return;
-				} else {
-					webServer.threads.addElement(this);
-				}
+				webServer.threads.addElement(this);
 			} else {
 				try {
 					wait();

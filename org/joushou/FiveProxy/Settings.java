@@ -15,7 +15,9 @@ class Settings {
   public static final int preservedPlaycount = -1; // No song with playcount equal or higher than this will be deleted from caches (-1 disables)
   public static final long maxCache = 1024*1024*1024; // Max cache size Unit: sqrt(-1)^4 * sqrt(64) bits :)
 
-  public static final int availableBandwidth = 10; // Max bandwidth to use for download from five-server
+  public static final int threads = 10; // Number of threads to serve http
+  public static final int availableBandwidth = 50; // Max bandwidth to use for download from five-server
+  public static final int connLimit = 2; // Max threads occupied from one ip
 
   public static final String cacheFolder = "songs/"; // Where to save the caches
 

@@ -17,14 +17,15 @@ import java.io.BufferedOutputStream;
 public class webServer {
  
 	static Vector threads = new Vector();
-	static int maxThreads = 10;
+	static Vector allThreads = new Vector();
   static int workingThreads = 0;
  
 	public static void startServer() {
-		for (int i = 0; i < maxThreads; i++) {
+		for (int i = 0; i < Settings.threads; i++) {
 			Worker w = new Worker();
 			w.start();
 			threads.addElement(w);
+			allThreads.addElement(w);
 		}
 		ServerSocket serverSocket = null;
 		try {
@@ -51,10 +52,28 @@ public class webServer {
             i.close();
             clientSocket.close();
 					} else {
-						w = (Worker) threads.elementAt(0);
-						threads.removeElementAt(0);
-				    w.socketOpenTime = System.currentTimeMillis();
-						w.setSocket(clientSocket);
+					  int i;
+					  int connections = 0;
+					  for (i = 0; i < allThreads.size(); i++) {
+					    Worker worker = (Worker) allThreads.elementAt(i);
+					    if (worker.clientIp != null && worker.clientIp.equals(clientSocket.getInetAddress().getHostAddress()))
+					      connections++;
+					  }
+					  System.out.println(connections);
+            if (connections >= Settings.connLimit) {
+              BufferedOutputStream bos = new BufferedOutputStream(clientSocket.getOutputStream());
+              BufferedReader br = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+              while (!br.readLine().equals("")){}
+              bos.write(("HTTP/1.1 403 Forbidden\r\nContent-Type: text/html; charset=UTF-8\r\nConnection: close\r\n\r\n<h1>Too many connections from your ip</h1>\nToo many requests from you ip.<br />\nPlease try again in a few moments, or contact the <a href=\""+Settings.webmaster+"\">webmaster</a>.\n<br /><hr /><i style=\"font-size: 10px\">five-proxy at <a href=\"http://"+Settings.hostname+":"+Settings.listenPort+"\">http://"+Settings.hostname+":"+Settings.listenPort+"</a></font></i>").getBytes());
+              bos.close();
+              br.close();
+              clientSocket.close();
+            } else {
+  						w = (Worker) threads.elementAt(0);
+  						threads.removeElementAt(0);
+  				    w.socketOpenTime = System.currentTimeMillis();
+  						w.setSocket(clientSocket);
+					  }
 					}
 				}
  
