@@ -8,7 +8,12 @@ import java.util.Vector;
 import java.util.Arrays;
 import java.lang.Long;
 import java.io.IOException;
- 
+import java.io.OutputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+
 public class webServer {
  
 	static Vector threads = new Vector();
@@ -38,10 +43,13 @@ public class webServer {
 				Worker w = null;
 				synchronized(threads) {
 					if(threads.isEmpty()) {
-						Worker ws = new Worker();
-						ws.socketOpenTime = System.currentTimeMillis();
-						ws.setSocket(clientSocket);
-						ws.start();
+            BufferedOutputStream o = new BufferedOutputStream(clientSocket.getOutputStream());
+            BufferedReader i = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            while (!i.readLine().equals("")){}
+            o.write("HTTP/1.1 503 Service Unavailable\r\nContent-Type: text/html; charset=UTF-8\r\nConnection: close\r\n\r\n<h1>Temporarily Unavailable</h1>\nToo many request are flowing in at the moment.<br />\nPlease try again in a few moments, or contact the <a href=\"mailto:joushou@joushou.org\">webmaster</a>.\n<br /><hr /><i style=\"font-size: 10px\">five-proxy at <a href=\"http://joushou.org:4001\">http://joushou.org:4001</a></font></i>".getBytes());
+            o.close();
+            i.close();
+            clientSocket.close();
 					} else {
 						w = (Worker) threads.elementAt(0);
 						threads.removeElementAt(0);

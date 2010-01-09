@@ -136,18 +136,16 @@ public class MusicDB {
     try {
       Connection con = getConnection();
       String str = "insert into playlog values(null, "+Integer.toString(songId)+",strftime('%s','now'),?)";
-      PreparedStatement ps = con.prepareStatement(str);      
-      boolean queryDone = false;
+      PreparedStatement ps = null;
       try {
-        ps.setString(1,ip);
         while (true) {
           try {
+            ps = con.prepareStatement(str);
+            ps.setString(1,ip);
             ps.executeUpdate();
             break;
           } catch (java.sql.SQLException sqle) {
-            if (sqle.getMessage().equals("database locked")) {
-              System.out.println("logPlay: Database locked");
-            } else {
+            if (!isLocked(sqle)) {
               throw sqle;
             }
           }
@@ -169,9 +167,7 @@ public class MusicDB {
           rs = st.executeQuery("select title as songName from songs where `id` == "+id+" LIMIT 1");
           break;
         } catch (java.sql.SQLException sqle) {
-          if (sqle.getMessage().equals("database locked")) {
-            System.out.println("getTitleFromId: Database locked");
-          } else {
+          if (!isLocked(sqle)) {
             throw sqle;
           }
         }
@@ -200,9 +196,7 @@ public class MusicDB {
           rs = st.executeQuery("select fileSize from songs where `id` == "+id+" LIMIT 1");
           break;
         } catch (java.sql.SQLException sqle) {
-          if (sqle.getMessage().equals("database locked")) {
-            System.out.println("getSizeFromId: Database locked");
-          } else {
+          if (!isLocked(sqle)) {
             throw sqle;
           }
         }
@@ -235,9 +229,7 @@ public class MusicDB {
             rs = st.executeQuery(str);
             break;
           } catch (java.sql.SQLException sqle) {
-            if (sqle.getMessage().equals("database locked")) {
-              System.out.println("getPlaylistFromArtist: Database locked");
-            } else {
+            if (!isLocked(sqle)) {
               throw sqle;
             }
           }
@@ -278,9 +270,7 @@ public class MusicDB {
             st.executeQuery(sql);
             break;
           } catch (java.sql.SQLException sqle) {
-            if (sqle.getMessage().equals("database locked")) {
-              System.out.println("getCleanupIds: Database locked");
-            } else {
+            if (!isLocked(sqle)) {
               throw sqle;
             }
           }
@@ -310,9 +300,7 @@ public class MusicDB {
             st.executeUpdate(str);
             break;
           } catch (java.sql.SQLException sqle) {
-            if (sqle.getMessage().equals("database locked")) {
-              System.out.println("deleteLogById: Database locked");
-            } else {
+            if (!isLocked(sqle)) {
               throw sqle;
             }
           }
@@ -321,5 +309,13 @@ public class MusicDB {
         con.close();
       }
     } catch(java.sql.SQLException e) {e.printStackTrace();}
+  }
+  private static boolean isLocked(java.sql.SQLException e) {
+    if (e.getMessage().equals("database locked") || e.getMessage().equals("database is locked")) {
+      try{Thread.sleep(5);} catch (java.lang.InterruptedException intE) {}
+      return true;
+    } else {
+      return false;
+    }
   }
 }

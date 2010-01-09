@@ -36,20 +36,20 @@ class Worker extends Thread {
 		try {
 			BufferedReader input = new BufferedReader(new InputStreamReader(s.getInputStream()));
 			BufferedOutputStream output = new BufferedOutputStream(s.getOutputStream(), 2048);
-                        while (true) {
-                            input.mark(10);
-                            if(connFinished) {
-                                output.close();
-                                input.close();
-                                break;
-                            } else if (input.read() == -1) {
-                              output.close();
-                              break;
-                            } else {
-                                input.reset();
-                                handleHttp(input, output);
-                            }
-                        }
+        while (true) {
+            input.mark(10);
+            if(connFinished) {
+                output.close();
+                input.close();
+                break;
+            } else if (input.read() == -1) {
+              output.close();
+              break;
+            } else {
+                input.reset();
+                handleHttp(input, output);
+            }
+        }
 		} catch(IOException e) {}
  
 	}
