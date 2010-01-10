@@ -63,7 +63,6 @@ public class webServer {
 					      connections++;
 					    }
 					  }
-					  System.out.println(connections);
             if (connections >= Settings.connLimit) {
               BufferedOutputStream bos = new BufferedOutputStream(clientSocket.getOutputStream());
               BufferedReader br = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));

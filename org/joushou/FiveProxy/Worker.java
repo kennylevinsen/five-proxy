@@ -29,11 +29,12 @@ class Worker extends Thread {
 		this.s = s;
 		notify();
 	}
-	private static boolean keepAlive = true;
+	private boolean keepAlive;
  
 	void handleClient() {
 		client = s.getInetAddress();
 		clientIp = client.getHostAddress();
+		keepAlive = true;
 		try {
 			BufferedReader input = new BufferedReader(new InputStreamReader(s.getInputStream()));
 			BufferedOutputStream output = new BufferedOutputStream(s.getOutputStream(), 2048);
@@ -101,9 +102,10 @@ class Worker extends Thread {
         if((seg = reqHead.split(" ")).length == 3) {
           if(seg[0].equals("Authorization:") && seg[1].equals("Basic") && (seg[2].equals("Zml2ZXVzZXI6dGVuc2hp") || seg[2].equals("Zml2ZXVzZXI6MzBiZGJjMGJhZWQ5NWJkNDFjMDVhYzBmZmQ2NDgyZWNiYzg4Y2NhOQ=="))) {
             authorized = true;
+          }
+        } else if(seg.length == 2) {
           if(seg[0].equals("Connection:") && seg[1].equals("Keep-Alive"))
             keepAliveHeader = true;
-          }
         }
       }
       if(!keepAliveHeader)
@@ -282,7 +284,7 @@ class Worker extends Thread {
   	} catch (Exception e) {e.printStackTrace();}
 	}
  
-  private static String buildHttpHeader(int returnCode, String ctype, long clength) {
+  private String buildHttpHeader(int returnCode, String ctype, long clength) {
 	  String s = "HTTP/1.1 ";
  
 		switch (returnCode) {
